@@ -13,6 +13,7 @@ class TrainingFox:
         self.location = Vector2(x, y)
         self.radius = 20
         self.direction = Vector2(x, y)
+        self.rabbit_vision = 400
 
         self.speed = 2
         self.move_timer = 0
@@ -25,7 +26,7 @@ class TrainingFox:
 
     def hunt_rabbit(self):
         dist = self.location.find_distance(self.rab.location)
-        if dist > 100:
+        if dist > self.rabbit_vision:
             self.hunting = False
             self.rab = None
             return False
@@ -49,7 +50,7 @@ class TrainingFox:
                     self.eat()
                     return False
 
-                if dist < 100:
+                if dist < self.rabbit_vision:
                     self.rab = r
                     self.hunting = True
                     return True

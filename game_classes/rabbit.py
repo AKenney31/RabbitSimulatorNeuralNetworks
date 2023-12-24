@@ -30,6 +30,7 @@ class Rabbit:
         self.currently_drinking_timer = 0
         self.currently_eating_timer = 0
         self.currently_hiding_timer = 0
+        self.decision_timer = 0
 
         # Event Trackers
         self.hiding = False
@@ -81,44 +82,52 @@ class Rabbit:
             elif self.being_eaten:
                 self.be_eaten()
             else:
-                # Calculate Action
-                max_d = math.sqrt(self.game.screen_width ** 2 + self.game.screen_height ** 2)
-                f = self.find_nearest(self.game.foxes)
-                if f:
-                    f_dist = self.location.find_distance(f.location)
-                else:
-                    f_dist = max_d
-
-                action = self.brain.predict_action([self.hunger / 100, self.hydration / 100, f_dist / max_d])
-
-                # Calculate New Direction
+                # Increment decision timer
+                self.decision_timer += 1
                 go_to_object = None
-                if action == "eat":
+
+                # The decision timer is designed to allow the rabbit to maintain the same direction and decision for
+                # a few moves to speed up computation and allow for more events to occur
+                if self.decision_timer > 7:
+                    self.decision_timer = 0
+                    # Calculate Action
+                    max_d = math.sqrt(self.game.screen_width ** 2 + self.game.screen_height ** 2)
+                    f = self.find_nearest(self.game.foxes)
+                    if f:
+                        f_dist = self.location.find_distance(f.location)
+                    else:
+                        f_dist = max_d
+
+                    action = self.brain.predict_action([self.hunger / 100, self.hydration / 100, f_dist / max_d])
+
                     # Calculate New Direction
-                    go_to_object = self.find_nearest(self.game.food)
-                    if go_to_object:
-                        performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
-                        self.direction.x = performance[0]
-                        self.direction.y = performance[1]
-                elif action == "drink":
-                    # Calculate New Direction
-                    go_to_object = self.find_nearest(self.game.water)
-                    if go_to_object:
-                        performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
-                        self.direction.x = performance[0]
-                        self.direction.y = performance[1]
-                elif action == "hide":
-                    # Calculate New Direction
-                    go_to_object = self.find_nearest(self.game.rocks)
-                    if go_to_object:
-                        performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
-                        self.direction.x = performance[0]
-                        self.direction.y = performance[1]
-                elif action == "explore":
-                    # Calculate New Direction
-                    rand_x = random.randint(0, self.game.screen_width)
-                    rand_y = random.randint(0, self.game.screen_height)
-                    self.direction.set_new_direction(Vector2(rand_x, rand_y), self.location)
+                    if action == "eat":
+                        # Calculate New Direction
+                        go_to_object = self.find_nearest(self.game.food)
+                        if go_to_object:
+                            performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
+                            self.direction.x = performance[0]
+                            self.direction.y = performance[1]
+                    elif action == "drink":
+                        # Calculate New Direction
+                        go_to_object = self.find_nearest(self.game.water)
+                        if go_to_object:
+                            performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
+                            self.direction.x = performance[0]
+                            self.direction.y = performance[1]
+                    elif action == "hide":
+                        # Calculate New Direction
+                        go_to_object = self.find_nearest(self.game.rocks)
+                        if go_to_object:
+                            performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
+                            self.direction.x = performance[0]
+                            self.direction.y = performance[1]
+                    elif action == "explore":
+                        self.decision_timer -= 3
+                        # Calculate New Direction
+                        rand_x = random.randint(0, self.game.screen_width)
+                        rand_y = random.randint(0, self.game.screen_height)
+                        self.direction.set_new_direction(Vector2(rand_x, rand_y), self.location)
 
                 # Increment Movement
                 self.direction.find_unit_vector()
@@ -131,12 +140,12 @@ class Rabbit:
                     self.location.add(self.direction)
 
                 if go_to_object:
-                    if self.location.find_distance(go_to_object.location) <= go_to_object.radius:
-                        if go_to_object is FoodSource:
+                    if self.location.find_distance(go_to_object.location) - self.size <= go_to_object.radius:
+                        if isinstance(go_to_object, FoodSource):
                             self.eat()
-                        elif go_to_object is WaterSource:
+                        elif isinstance(go_to_object, WaterSource):
                             self.drink()
-                        elif go_to_object is Rock:
+                        elif isinstance(go_to_object, Rock):
                             self.hide()
         else:
             self.move_timer += 1

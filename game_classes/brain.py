@@ -24,8 +24,14 @@ class Brain:
         else:
             if os.path.exists('./action_chooser_weights'):
                 self.action_chooser.load_weights('./action_chooser_weights')
+            else:
+                for layer in self.action_chooser.layers:
+                    layer.set_weights([w + tf.random.normal(w.shape, stddev=.1) for w in layer.get_weights()])
             if os.path.exists('./action_performer_weights'):
                 self.action_performer.load_weights('./action_performer_weights')
+            else:
+                for layer in self.action_performer.layers:
+                    layer.set_weights([w + tf.random.normal(w.shape, stddev=.1) for w in layer.get_weights()])
 
     def predict_action(self, inputs):
         inputs = np.expand_dims(inputs, axis=0)  # Add batch dimension

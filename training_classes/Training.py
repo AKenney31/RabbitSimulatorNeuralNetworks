@@ -1,3 +1,5 @@
+import random
+
 import pygame
 import tensorflow as tf
 
@@ -55,7 +57,7 @@ class Training:
             fox.draw(screen)
         pygame.display.flip()
 
-    def game_loop(self, brain: Brain = None):
+    def game_loop(self, i: int, brain: Brain = None):
         # Reset Simulation Objects
         self.rabbits = []
         self.foxes = []
@@ -65,20 +67,33 @@ class Training:
         pygame.init()
         size = self.screen_width, self.screen_height
         screen = pygame.display.set_mode(size)
+        pygame.display.set_caption(f'Training Window: {i + 1}')
         # Add Fox
-        self.foxes.append(TrainingFox(self.screen_width / 3, self.screen_height / 4, self))
+        self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 2, self))
         self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 3, self))
-        self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 5, self))
+        self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 4, self))
         # Add Water
         self.water.append(WaterSource(550, 200, 100, self))
         self.water.append(WaterSource(50, 600, 50, self))
         # Add Rabbits
-        self.rabbits.append(TrainingRabbit(200, 40, modify_action_chooser(brain) if brain else Brain(), self))
-        self.rabbits.append(TrainingRabbit(400, 140, modify_action_chooser(brain) if brain else Brain(), self))
-        self.rabbits.append(TrainingRabbit(600, 350, modify_action_chooser(brain) if brain else Brain(), self))
-        self.rabbits.append(TrainingRabbit(350, 600, modify_action_chooser(brain) if brain else Brain(), self))
-        self.rabbits.append(TrainingRabbit(200, 40, modify_action_chooser(brain) if brain else Brain(), self))
-        self.rabbits.append(TrainingRabbit(400, 140, modify_action_chooser(brain) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_action_chooser(brain) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_action_chooser(brain) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_action_chooser(brain) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_action_chooser(brain) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_action_chooser(brain) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_action_chooser(brain) if brain else Brain(), self))
         self.pop = self.rabbits.copy()
         # Add Rocks
         self.rocks.append(Rock(200, 400, 20, self))
@@ -90,8 +105,8 @@ class Training:
         self.food.append(FoodSource(350, 400, self))
         self.food.append(FoodSource(200, 47, self))
         self.food.append(FoodSource(30, 60, self))
-        self.food.append(FoodSource(500, 600, self))
-        self.food.append(FoodSource(50, 600, self))
+        self.food.append(FoodSource(400, 600, self))
+        self.food.append(FoodSource(600, 600, self))
 
         while 1:
             for event in pygame.event.get():
@@ -112,7 +127,7 @@ class Training:
             self.draw_window(screen)
 
     def train_action_chooser(self):
-        for i in range(200):
+        for i in range(150):
             best_brain = None
             if len(self.pop) > 0:
                 best_brain = self.pop[0].brain
@@ -121,7 +136,7 @@ class Training:
                     if rab.fitness > best_fitness:
                         best_brain = rab.brain
                         best_fitness = rab.fitness
-            self.game_loop(best_brain)
+            self.game_loop(i, brain=best_brain)
 
         if len(self.pop) > 0:
             best_brain = self.pop[0].brain

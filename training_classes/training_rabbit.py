@@ -27,6 +27,7 @@ class TrainingRabbit:
         self.hunger_timer = 0
         self.thirst_timer = 0
         self.currently_hiding_timer = 0
+        self.decision_timer = 0
 
         # Event Trackers
         self.hiding = False
@@ -61,91 +62,99 @@ class TrainingRabbit:
             self.thirst_timer += 1
             self.hunger_timer += 1
             self.move_timer = 0
+            self.decision_timer += 1
 
             # Calculate Action
-            max_d = math.sqrt(self.game.screen_width ** 2 + self.game.screen_height ** 2)
-            f = self.find_nearest(self.game.foxes)
-            if f:
-                f_dist = self.location.find_distance(f.location)
-            else:
-                f_dist = max_d
-
-            action = self.brain.predict_action([self.hunger / 100, self.hydration / 100, f_dist / max_d])
-
-            # Calculate New Direction
             go_to_object = None
-            if action == "eat":
-                # Calculate Fitness
-                if self.hunger > 90:
-                    self.fitness += 1
-                elif self.hunger > 60:
-                    self.fitness += 5
-                elif self.hunger > 40:
-                    self.fitness += 8
-                else:
-                    self.fitness += 10
-
-                # Calculate New Direction
-                f = self.find_nearest(self.game.food)
+            if self.decision_timer > 7:
+                self.decision_timer = 0
+                max_d = math.sqrt(self.game.screen_width ** 2 + self.game.screen_height ** 2)
+                f = self.find_nearest(self.game.foxes)
                 if f:
-                    go_to_object = f
-                    self.direction.set_new_direction(f.location, self.location)
-            elif action == "drink":
-                # Calculate Fitness
-                if self.hydration > 90:
-                    self.fitness += 1
-                elif self.hydration > 60:
-                    self.fitness += 5
-                elif self.hydration > 40:
-                    self.fitness += 8
+                    f_dist = self.location.find_distance(f.location)
                 else:
-                    self.fitness += 10
+                    f_dist = max_d
+
+                action = self.brain.predict_action([self.hunger / 100, self.hydration / 100, f_dist / max_d])
 
                 # Calculate New Direction
-                w = self.find_nearest(self.game.water)
-                if w:
-                    go_to_object = w
-                    self.direction.set_new_direction(w.location, self.location)
-            elif action == "hide":
-                # Calculate Fitness
-                fox = self.find_nearest(self.game.foxes)
-                if not fox:
-                    self.fitness -= 5
-                else:
-                    f_dist = self.location.find_distance(fox.location)
-                    if f_dist > max_d / 2:
+                if action == "eat":
+                    # Calculate Fitness
+                    if self.hunger > 90:
+                        self.fitness -= 5
+                    elif self.hunger > 60:
+                        self.fitness -= 3
+                    elif self.hunger > 40:
                         self.fitness += 1
-                    elif f_dist > max_d / 4:
-                        self.fitness += 4
-                    elif f_dist > max_d / 8:
-                        self.fitness += 6
                     else:
                         self.fitness += 10
 
-                # Calculate New Direction
-                r = self.find_nearest(self.game.rocks)
-                if r:
-                    go_to_object = r
-                    if not self.hiding:
-                        self.direction.set_new_direction(r.location, self.location)
+                    # Calculate New Direction
+                    f = self.find_nearest(self.game.food)
+                    if f:
+                        go_to_object = f
+                        self.direction.set_new_direction(f.location, self.location)
+                elif action == "drink":
+                    # Calculate Fitness
+                    if self.hydration > 90:
+                        self.fitness -= 5
+                    elif self.hydration > 60:
+                        self.fitness -= 2
+                    elif self.hydration > 40:
+                        self.fitness += 1
                     else:
-                        self.direction.set_new_direction(self.location, self.location)
-            elif action == "explore":
-                # Calculate Fitness
-                fox = self.find_nearest(self.game.foxes)
-                if self.hunger > 80 and self.hydration > 80 and (not fox or self.location.find_distance(fox.location) >
-                                                                 max_d / 2):
-                    self.fitness += 10
-                elif self.hunger < 50 or self.hydration < 50 or (fox and self.location.find_distance(fox.location) <
-                                                                 max_d / 4):
-                    self.fitness -= 5
-                else:
-                    self.fitness += 5
+                        self.fitness += 10
 
-                # Calculate New Direction
-                rand_x = random.randint(0, self.game.screen_width)
-                rand_y = random.randint(0, self.game.screen_height)
-                self.direction.set_new_direction(Vector2(rand_x, rand_y), self.location)
+                    # Calculate New Direction
+                    w = self.find_nearest(self.game.water)
+                    if w:
+                        go_to_object = w
+                        self.direction.set_new_direction(w.location, self.location)
+                elif action == "hide":
+                    # Needs to decide whether to stay hiding or leave on every move
+                    self.decision_timer = 8
+                    # Calculate Fitness
+                    fox = self.find_nearest(self.game.foxes)
+                    if not fox:
+                        self.fitness -= 5
+                    else:
+                        f_dist = self.location.find_distance(fox.location)
+                        if f_dist > max_d / 2:
+                            self.fitness -= 5
+                        elif f_dist > max_d / 4:
+                            self.fitness -= 2
+                        elif f_dist > max_d / 6:
+                            self.fitness -= 1
+                        else:
+                            self.fitness += 10
+
+                    # Calculate New Direction
+                    r = self.find_nearest(self.game.rocks)
+                    if r:
+                        go_to_object = r
+                        if not self.hiding:
+                            self.direction.set_new_direction(r.location, self.location)
+                        else:
+                            self.direction.set_new_direction(self.location, self.location)
+                elif action == "explore":
+                    # It will explore for a longer time to try and cover more of the map
+                    self.decision_timer -= 3
+
+                    # Calculate Fitness
+                    fox = self.find_nearest(self.game.foxes)
+                    if self.hunger < 40 or self.hydration < 40 or (fox and self.location.find_distance(fox.location) <
+                                                                   max_d / 4):
+                        self.fitness -= 50
+                    elif self.hunger > 90 and self.hydration > 90 and (fox and self.location.find_distance(fox.location)
+                                                                       > max_d / 2):
+                        self.fitness += 5
+                    else:
+                        self.fitness += 3
+
+                    # Calculate New Direction
+                    rand_x = random.randint(0, self.game.screen_width)
+                    rand_y = random.randint(0, self.game.screen_height)
+                    self.direction.set_new_direction(Vector2(rand_x, rand_y), self.location)
 
             # Increment Movement
             self.direction.find_unit_vector()
@@ -160,17 +169,14 @@ class TrainingRabbit:
             # Calculate if event should occur
             self.hiding = False
             if go_to_object:
-                if self.location.find_distance(go_to_object.location) <= go_to_object.radius:
-                    if go_to_object is FoodSource:
-                        print('ate')
+                if self.location.find_distance(go_to_object.location) - self.size <= go_to_object.radius:
+                    if isinstance(go_to_object, FoodSource):
                         # Reset Hunger
                         self.hunger = 100
-                    elif go_to_object is WaterSource:
-                        print('drink')
+                    elif isinstance(go_to_object, WaterSource):
                         # Reset Hydration
                         self.hydration = 100
-                    elif go_to_object is Rock:
-                        print('hid')
+                    elif isinstance(go_to_object, Rock):
                         # Set Hiding
                         self.hiding = True
         else:

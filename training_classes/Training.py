@@ -11,10 +11,12 @@ from training_classes.training_rabbit import TrainingRabbit
 from training_classes.training_fox import TrainingFox
 
 
-def modify_action_chooser(brain: Brain):
+def modify_brain(brain: Brain, chooser: bool):
     new_brain = Brain(brain)
+    model = new_brain.action_chooser if chooser else new_brain.action_performer
+
     # Mutate weights
-    for layer in new_brain.action_chooser.layers:
+    for layer in model.layers:
         layer.set_weights([w + tf.random.normal(w.shape, stddev=.05) for w in layer.get_weights()])
     return new_brain
 
@@ -57,7 +59,7 @@ class Training:
             fox.draw(screen)
         pygame.display.flip()
 
-    def game_loop(self, i: int, brain: Brain = None):
+    def game_loop_chooser(self, i: int, brain: Brain = None):
         # Reset Simulation Objects
         self.rabbits = []
         self.foxes = []
@@ -78,22 +80,22 @@ class Training:
         # Add Rabbits
         self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
                                            random.randint(0, self.screen_height),
-                                           modify_action_chooser(brain) if brain else Brain(), self))
+                                           modify_brain(brain, True) if brain else Brain(), self))
         self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
                                            random.randint(0, self.screen_height),
-                                           modify_action_chooser(brain) if brain else Brain(), self))
+                                           modify_brain(brain, True) if brain else Brain(), self))
         self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
                                            random.randint(0, self.screen_height),
-                                           modify_action_chooser(brain) if brain else Brain(), self))
+                                           modify_brain(brain, True) if brain else Brain(), self))
         self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
                                            random.randint(0, self.screen_height),
-                                           modify_action_chooser(brain) if brain else Brain(), self))
+                                           modify_brain(brain, True) if brain else Brain(), self))
         self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
                                            random.randint(0, self.screen_height),
-                                           modify_action_chooser(brain) if brain else Brain(), self))
+                                           modify_brain(brain, True) if brain else Brain(), self))
         self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
                                            random.randint(0, self.screen_height),
-                                           modify_action_chooser(brain) if brain else Brain(), self))
+                                           modify_brain(brain, True) if brain else Brain(), self))
         self.pop = self.rabbits.copy()
         # Add Rocks
         self.rocks.append(Rock(200, 400, 20, self))
@@ -127,7 +129,7 @@ class Training:
             self.draw_window(screen)
 
     def train_action_chooser(self):
-        for i in range(150):
+        for i in range(250):
             best_brain = None
             if len(self.pop) > 0:
                 best_brain = self.pop[0].brain
@@ -136,7 +138,7 @@ class Training:
                     if rab.fitness > best_fitness:
                         best_brain = rab.brain
                         best_fitness = rab.fitness
-            self.game_loop(i, brain=best_brain)
+            self.game_loop_chooser(i, brain=best_brain)
 
         if len(self.pop) > 0:
             best_brain = self.pop[0].brain
@@ -148,10 +150,79 @@ class Training:
 
             best_brain.save_action_chooser()
 
+    def game_loop_performer(self, i: int, brain: Brain = None):
+        # Reset Simulation Objects
+        self.rabbits = []
+        self.foxes = []
+        self.water = []
+        self.rocks = []
+        self.food = []
+        pygame.init()
+        size = self.screen_width, self.screen_height
+        screen = pygame.display.set_mode(size)
+        pygame.display.set_caption(f'Training Window: {i + 1}')
+
+        # Add Rabbits
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_brain(brain, False) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_brain(brain, False) if brain else Brain(), self))
+        self.rabbits.append(TrainingRabbit(random.randint(0, self.screen_width),
+                                           random.randint(0, self.screen_height),
+                                           modify_brain(brain, False) if brain else Brain(), self))
+        self.pop = self.rabbits.copy()
+
+        # Add Rock
+        self.rocks.append(Rock(self.screen_width / 2, self.screen_height / 8, 20, self))
+
+        while 1:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit(0)
+
+            if len(self.rabbits) == 0:
+                pygame.quit()
+                return
+
+            for rab in self.rabbits:
+                rab.action_performer_trainer()
+
+            self.draw_window(screen)
+
+    def train_action_performer(self):
+        for i in range(250):
+            best_brain = None
+            if len(self.pop) > 0:
+                best_brain = self.pop[0].brain
+                best_fitness = self.pop[0].fitness
+                for rab in self.pop:
+                    if rab.fitness > best_fitness:
+                        best_brain = rab.brain
+                        best_fitness = rab.fitness
+            self.game_loop_performer(i, brain=best_brain)
+
+        if len(self.pop) > 0:
+            best_brain = self.pop[0].brain
+            best_fitness = self.pop[0].fitness
+            for rab in self.pop:
+                if rab.fitness > best_fitness:
+                    best_brain = rab.brain
+                    best_fitness = rab.fitness
+
+            best_brain.save_action_performer()
+
 
 def main():
     t = Training()
-    t.train_action_chooser()
+    print('Type:\n"1" to train the action chooser\n"2" to train the action performer\n"3" to train both')
+    i = int(input('Then press enter: '))
+    if i == 1 or i == 3:
+        t.train_action_chooser()
+    if i == 2 or i == 3:
+        t.train_action_performer()
 
 
 if __name__ == "__main__":

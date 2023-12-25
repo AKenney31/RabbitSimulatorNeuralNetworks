@@ -48,6 +48,44 @@ class TrainingRabbit:
         if not self.hiding:
             pygame.draw.circle(screen, self.game.rab, self.location.return_tuple(), self.size)
 
+    # Outline: Movement function focused on training the Action Performer
+    def action_performer_trainer(self):
+        # The object being sought out is a rock on the screen
+        objective = self.game.rocks[0]
+
+        # The hunger is used as a time limit for the rabbit to reach objective
+        if self.hunger_timer > 50:
+            self.hunger -= 1
+            self.hunger_timer = 0
+
+        self.hunger_timer += 1
+        self.decision_timer += 1
+
+        if self.hunger < 0:
+            self.fitness -= 100
+            self.die()
+
+        if self.decision_timer > 7:
+            dist = self.location.find_distance(objective.location)
+            self.decision_timer = 0
+            new_dir = self.brain.predict_new_direction([objective.location.x, objective.location.y])
+            self.direction.x = new_dir[0]
+            self.direction.y = new_dir[1]
+            self.direction.find_unit_vector()
+            self.location.add(self.direction)
+            new_dist = self.location.find_distance(objective.location)
+
+            if new_dist < dist:
+                self.fitness += 10
+            else:
+                self.fitness -= 20
+        else:
+            self.location.add(self.direction)
+
+        if self.location.find_distance(objective.location) - self.size <= objective.radius:
+            self.fitness += 100
+            self.die()
+
     # Outline: Movement function focused on training the Action Chooser
     def action_chooser_trainer(self):
         if self.move_timer > self.speed:

@@ -36,6 +36,15 @@ class TrainingRabbit:
         self.fitness = 0
 
     def draw(self, screen):
+        # Water health bar
+        pygame.draw.rect(screen, "red", (self.location.x - 20, self.location.y - self.size - 12, 40, 4))
+        pygame.draw.rect(screen, self.game.water_blue, (self.location.x - 20, self.location.y - self.size - 12,
+                                                        40 * (self.hydration / 100), 4))
+
+        # Food health bar
+        pygame.draw.rect(screen, "red", (self.location.x - 20, self.location.y - self.size - 6, 40, 4))
+        pygame.draw.rect(screen, self.game.food_green, (self.location.x - 20, self.location.y - self.size - 6,
+                                                        40 * (self.hunger / 100), 4))
         if not self.hiding:
             pygame.draw.circle(screen, self.game.rab, self.location.return_tuple(), self.size)
 
@@ -43,12 +52,12 @@ class TrainingRabbit:
     def action_chooser_trainer(self):
         if self.move_timer > self.speed:
             # Decrement the rabbit's hydration
-            if self.thirst_timer > 15:
+            if self.thirst_timer > 8:
                 self.hydration -= 1
                 self.thirst_timer = 0
 
             # Decrement the rabbit's hunger
-            if self.hunger_timer > 20:
+            if self.hunger_timer > 12:
                 self.hunger -= 1
                 self.hunger_timer = 0
 
@@ -66,7 +75,9 @@ class TrainingRabbit:
 
             # Calculate Action
             go_to_object = None
-            if self.decision_timer > 7:
+            if self.hiding:
+                self.hide()
+            elif self.decision_timer > 7:
                 self.decision_timer = 0
                 max_d = math.sqrt(self.game.screen_width ** 2 + self.game.screen_height ** 2)
                 f = self.find_nearest(self.game.foxes)
@@ -111,8 +122,8 @@ class TrainingRabbit:
                         go_to_object = w
                         self.direction.set_new_direction(w.location, self.location)
                 elif action == "hide":
-                    # Needs to decide whether to stay hiding or leave on every move
-                    self.decision_timer = 8
+                    # Needs to decide whether to stay hiding or leave on
+                    self.decision_timer = 5
                     # Calculate Fitness
                     fox = self.find_nearest(self.game.foxes)
                     if not fox:
@@ -167,7 +178,6 @@ class TrainingRabbit:
                 self.location.add(self.direction)
 
             # Calculate if event should occur
-            self.hiding = False
             if go_to_object:
                 if self.location.find_distance(go_to_object.location) - self.size <= go_to_object.radius:
                     if isinstance(go_to_object, FoodSource):
@@ -178,7 +188,7 @@ class TrainingRabbit:
                         self.hydration = 100
                     elif isinstance(go_to_object, Rock):
                         # Set Hiding
-                        self.hiding = True
+                        self.hide()
         else:
             self.move_timer += 1
 
@@ -214,6 +224,11 @@ class TrainingRabbit:
         self.hiding = True
         self.direction.x = 0
         self.direction.y = 0
+        self.currently_hiding_timer += 1
+        if self.currently_hiding_timer > 15:
+            # Finish hiding
+            self.hiding = False
+            self.currently_hiding_timer = 0
 
     def die(self):
         if self in self.game.rabbits:

@@ -217,7 +217,7 @@ class Rabbit:
         self.direction.y = 0
         self.currently_hiding_timer += 1
         if self.currently_hiding_timer > 15:
-            # Finish drinking
+            # Finish hiding
             self.hiding = False
             self.currently_hiding_timer = 0
 

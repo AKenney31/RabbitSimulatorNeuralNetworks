@@ -69,9 +69,9 @@ class Training:
         screen = pygame.display.set_mode(size)
         pygame.display.set_caption(f'Training Window: {i + 1}')
         # Add Fox
+        self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 1.5, self))
         self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 2, self))
-        self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 3, self))
-        self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 4, self))
+        self.foxes.append(TrainingFox(self.screen_width / 2, self.screen_height / 2.5, self))
         # Add Water
         self.water.append(WaterSource(550, 200, 100, self))
         self.water.append(WaterSource(50, 600, 50, self))
@@ -99,7 +99,7 @@ class Training:
         self.rocks.append(Rock(200, 400, 20, self))
         self.rocks.append(Rock(70, 70, 30, self))
         self.rocks.append(Rock(600, 500, 50, self))
-        self.rocks.append(Rock(400, 600, 15, self))
+        self.rocks.append(Rock(300, 600, 15, self))
         self.rocks.append(Rock(150, 200, 30, self))
         # Add Food
         self.food.append(FoodSource(350, 400, self))

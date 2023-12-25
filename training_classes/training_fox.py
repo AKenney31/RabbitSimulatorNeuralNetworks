@@ -13,7 +13,7 @@ class TrainingFox:
         self.location = Vector2(x, y)
         self.radius = 20
         self.direction = Vector2(x, y)
-        self.rabbit_vision = 400
+        self.rabbit_vision = 300
 
         self.speed = 2
         self.move_timer = 0
@@ -75,6 +75,7 @@ class TrainingFox:
 
     def eat(self):
         self.hunting = False
+        self.rab.fitness -= 20
         self.rab.die()
         self.rab = None
 

@@ -63,8 +63,10 @@ class TrainingRabbit:
 
             # Rabbit dies if it's hunger or hydration runs out
             if self.hydration < 0:
+                self.fitness -= 50
                 self.die()
             elif self.hunger < 0:
+                self.fitness -= 100
                 self.die()
 
             # Increment all the rabbit's event timer
@@ -92,13 +94,13 @@ class TrainingRabbit:
                 if action == "eat":
                     # Calculate Fitness
                     if self.hunger > 90:
-                        self.fitness -= 5
-                    elif self.hunger > 60:
                         self.fitness -= 3
-                    elif self.hunger > 40:
-                        self.fitness += 1
+                    elif self.hunger > 60:
+                        self.fitness += 3
+                    elif self.hunger > 30:
+                        self.fitness += 6
                     else:
-                        self.fitness += 10
+                        self.fitness += 20
 
                     # Calculate New Direction
                     f = self.find_nearest(self.game.food)
@@ -130,11 +132,11 @@ class TrainingRabbit:
                         self.fitness -= 5
                     else:
                         f_dist = self.location.find_distance(fox.location)
-                        if f_dist > max_d / 2:
+                        if f_dist > 150:
                             self.fitness -= 5
-                        elif f_dist > max_d / 4:
+                        elif f_dist > 90:
                             self.fitness -= 2
-                        elif f_dist > max_d / 6:
+                        elif f_dist > 60:
                             self.fitness -= 1
                         else:
                             self.fitness += 10
@@ -210,9 +212,6 @@ class TrainingRabbit:
 
     # Returns true if rabbit goes off the map or into water
     def check_location(self):
-        w = self.find_nearest(self.game.water)
-        if self.location.find_distance(w.location) < w.radius:
-            return True
         if self.location.x > self.game.screen_width or self.location.x < 0:
             return True
         if self.location.y > self.game.screen_height or self.location.y < 0:

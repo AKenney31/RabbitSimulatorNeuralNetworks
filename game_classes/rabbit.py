@@ -44,6 +44,15 @@ class Rabbit:
         self.times_hide = 0
 
     def draw(self, screen):
+        # Water health bar
+        pygame.draw.rect(screen, "red", (self.location.x - 20, self.location.y - self.size - 12, 40, 4))
+        pygame.draw.rect(screen, self.game.water_blue, (self.location.x - 20, self.location.y - self.size - 12,
+                                                        40 * (self.hydration / 100), 4))
+
+        # Food health bar
+        pygame.draw.rect(screen, "red", (self.location.x - 20, self.location.y - self.size - 6, 40, 4))
+        pygame.draw.rect(screen, self.game.food_green, (self.location.x - 20, self.location.y - self.size - 6,
+                                                        40 * (self.hunger / 100), 4))
         if not self.hiding:
             pygame.draw.circle(screen, g.r_light, self.location.return_tuple(), self.size)
 
@@ -168,9 +177,6 @@ class Rabbit:
 
     # Returns true if rabbit goes off the map or into water
     def check_location(self):
-        w = self.find_nearest(self.game.water)
-        if self.location.find_distance(w.location) < w.radius:
-            return True
         if self.location.x > self.game.screen_width or self.location.x < 0:
             return True
         if self.location.y > self.game.screen_height or self.location.y < 0:

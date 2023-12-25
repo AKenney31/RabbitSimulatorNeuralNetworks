@@ -123,7 +123,7 @@ class Game:
             if self.fox_spawn_numbers[self.ind] == len(self.rabbits):
                 x = random.randint(0, self.screen_width)
                 y = random.randint(0, self.screen_height)
-                self.foxes.append(Fox(x, y))
+                self.foxes.append(Fox(x, y, self))
                 self.ind += 1
 
             self.draw_window(screen)

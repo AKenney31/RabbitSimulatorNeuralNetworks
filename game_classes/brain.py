@@ -22,13 +22,15 @@ class Brain:
             self.action_chooser.set_weights(brain.action_chooser.weights)
             self.action_performer.set_weights(brain.action_performer.weights)
         else:
-            if os.path.exists('./action_chooser_weights'):
+            if os.path.exists('./action_chooser_weights.index'):
                 self.action_chooser.load_weights('./action_chooser_weights')
+                print('loaded action_chooser')
             else:
                 for layer in self.action_chooser.layers:
                     layer.set_weights([w + tf.random.normal(w.shape, stddev=.1) for w in layer.get_weights()])
-            if os.path.exists('./action_performer_weights'):
+            if os.path.exists('./action_performer_weights.index'):
                 self.action_performer.load_weights('./action_performer_weights')
+                print('loaded action_performer')
             else:
                 for layer in self.action_performer.layers:
                     layer.set_weights([w + tf.random.normal(w.shape, stddev=.1) for w in layer.get_weights()])

@@ -1,7 +1,6 @@
 import math
 
 import pygame
-import globals as g
 from game_classes.food_src import FoodSource
 from game_classes.rock import Rock
 from game_classes.water_src import WaterSource
@@ -54,7 +53,7 @@ class Rabbit:
         pygame.draw.rect(screen, self.game.food_green, (self.location.x - 20, self.location.y - self.size - 6,
                                                         40 * (self.hunger / 100), 4))
         if not self.hiding:
-            pygame.draw.circle(screen, g.r_light, self.location.return_tuple(), self.size)
+            pygame.draw.circle(screen, self.game.rab, self.location.return_tuple(), self.size)
 
     # Outline: Main Movement Driver Methods, Go To Methods, Check For Methods, Event Methods, Quadrant Methods
     # Main Movement Driver Methods
@@ -113,30 +112,25 @@ class Rabbit:
                     if action == "eat":
                         # Calculate New Direction
                         go_to_object = self.find_nearest(self.game.food)
-                        if go_to_object:
-                            performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
-                            self.direction.x = performance[0]
-                            self.direction.y = performance[1]
                     elif action == "drink":
                         # Calculate New Direction
                         go_to_object = self.find_nearest(self.game.water)
-                        if go_to_object:
-                            performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
-                            self.direction.x = performance[0]
-                            self.direction.y = performance[1]
                     elif action == "hide":
                         # Calculate New Direction
                         go_to_object = self.find_nearest(self.game.rocks)
-                        if go_to_object:
-                            performance = self.brain.predict_new_direction([go_to_object.location.x, go_to_object.location.y])
-                            self.direction.x = performance[0]
-                            self.direction.y = performance[1]
                     elif action == "explore":
                         self.decision_timer -= 3
                         # Calculate New Direction
                         rand_x = random.randint(0, self.game.screen_width)
                         rand_y = random.randint(0, self.game.screen_height)
                         self.direction.set_new_direction(Vector2(rand_x, rand_y), self.location)
+
+                if go_to_object:
+                    performance = self.brain.predict_new_direction(
+                        [go_to_object.location.x, go_to_object.location.y],
+                        self.game.screen_width, self.game.screen_height)
+                    self.direction.x = performance[0]
+                    self.direction.y = performance[1]
 
                 # Increment Movement
                 self.direction.find_unit_vector()
@@ -237,5 +231,5 @@ class Rabbit:
         self.direction.y = 0
 
     def die(self):
-        if self in g.rabbits:
-            g.rabbits.remove(self)
+        if self in self.game.rabbits:
+            self.game.rabbits.remove(self)

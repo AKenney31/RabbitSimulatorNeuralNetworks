@@ -15,7 +15,7 @@ class Brain:
         ])
 
         self.action_performer = keras.Sequential([
-            layers.Dense(8, activation='sigmoid', input_shape=(2,)),
+            layers.Dense(6, activation='sigmoid', input_shape=(2,)),
             layers.Dense(2, activation='sigmoid')
         ])
         if brain:
@@ -40,10 +40,11 @@ class Brain:
         output = self.action_chooser.predict(inputs)
         return self.actions[int(tf.argmax(output, axis=1).numpy()[0])]
 
-    def predict_new_direction(self, inputs):
+    def predict_new_direction(self, inputs, screenWidth, screenHeight):
         inputs = np.expand_dims(inputs, axis=0)  # Add batch dimension
         output = self.action_performer.predict(inputs)
-        return output.flatten()
+        o_flat = output.flatten()
+        return np.clip(o_flat[0], 0, screenWidth), np.clip(o_flat[1], 0, screenHeight)
 
     def save_action_chooser(self):
         self.action_chooser.save_weights('./action_chooser_weights')

@@ -128,28 +128,6 @@ class Training:
 
             self.draw_window(screen)
 
-    def train_action_chooser(self):
-        for i in range(250):
-            best_brain = None
-            if len(self.pop) > 0:
-                best_brain = self.pop[0].brain
-                best_fitness = self.pop[0].fitness
-                for rab in self.pop:
-                    if rab.fitness > best_fitness:
-                        best_brain = rab.brain
-                        best_fitness = rab.fitness
-            self.game_loop_chooser(i, brain=best_brain)
-
-        if len(self.pop) > 0:
-            best_brain = self.pop[0].brain
-            best_fitness = self.pop[0].fitness
-            for rab in self.pop:
-                if rab.fitness > best_fitness:
-                    best_brain = rab.brain
-                    best_fitness = rab.fitness
-
-            best_brain.save_action_chooser()
-
     def game_loop_performer(self, i: int, brain: Brain = None):
         # Reset Simulation Objects
         self.rabbits = []
@@ -175,7 +153,8 @@ class Training:
         self.pop = self.rabbits.copy()
 
         # Add Rock
-        self.rocks.append(Rock(self.screen_width / 2, self.screen_height / 8, 20, self))
+        self.rocks.append(Rock(random.randint(0, self.screen_width), random.randint(0, self.screen_height),
+                               20, self))
 
         while 1:
             for event in pygame.event.get():
@@ -192,7 +171,7 @@ class Training:
 
             self.draw_window(screen)
 
-    def train_action_performer(self):
+    def train_model(self, performer: bool):
         for i in range(250):
             best_brain = None
             if len(self.pop) > 0:
@@ -202,7 +181,7 @@ class Training:
                     if rab.fitness > best_fitness:
                         best_brain = rab.brain
                         best_fitness = rab.fitness
-            self.game_loop_performer(i, brain=best_brain)
+            self.game_loop_performer(i, brain=best_brain) if performer else self.game_loop_chooser(i, brain=best_brain)
 
         if len(self.pop) > 0:
             best_brain = self.pop[0].brain
@@ -212,17 +191,20 @@ class Training:
                     best_brain = rab.brain
                     best_fitness = rab.fitness
 
-            best_brain.save_action_performer()
+            best_brain.save_action_performer() if performer else best_brain.save_action_chooser()
 
 
 def main():
     t = Training()
     print('Type:\n"1" to train the action chooser\n"2" to train the action performer\n"3" to train both')
     i = int(input('Then press enter: '))
-    if i == 1 or i == 3:
-        t.train_action_chooser()
-    if i == 2 or i == 3:
-        t.train_action_performer()
+    if i == 1:
+        t.train_model(performer=False)
+    elif i == 2:
+        t.train_model(performer=True)
+    else:
+        t.train_model(performer=False)
+        t.train_model(performer=True)
 
 
 if __name__ == "__main__":

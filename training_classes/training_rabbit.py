@@ -54,7 +54,7 @@ class TrainingRabbit:
         objective = self.game.rocks[0]
 
         # The hunger is used as a time limit for the rabbit to reach objective
-        if self.hunger_timer > 50:
+        if self.hunger_timer > 20:
             self.hunger -= 1
             self.hunger_timer = 0
 
@@ -65,14 +65,16 @@ class TrainingRabbit:
             self.fitness -= 100
             self.die()
 
-        if self.decision_timer > 7:
+        if self.decision_timer > 5:
             dist = self.location.find_distance(objective.location)
             self.decision_timer = 0
-            new_dir = self.brain.predict_new_direction([objective.location.x, objective.location.y])
+            new_dir = self.brain.predict_new_direction([objective.location.x, objective.location.y],
+                                                       self.game.screen_width, self.game.screen_height)
             self.direction.x = new_dir[0]
             self.direction.y = new_dir[1]
             self.direction.find_unit_vector()
             self.location.add(self.direction)
+            print(self.direction.x, self.direction.y)
             new_dist = self.location.find_distance(objective.location)
 
             if new_dist < dist:
@@ -82,8 +84,15 @@ class TrainingRabbit:
         else:
             self.location.add(self.direction)
 
+        # If rabbit goes off the map, turn it around
+        if self.check_location():
+            self.direction.x *= -2
+            self.direction.y *= -2
+            self.location.add(self.direction)
+
+        # If rabbit reaches objective, die and reward
         if self.location.find_distance(objective.location) - self.size <= objective.radius:
-            self.fitness += 100
+            self.fitness += 100 * len(self.game.rabbits)
             self.die()
 
     # Outline: Movement function focused on training the Action Chooser
@@ -211,7 +220,7 @@ class TrainingRabbit:
             self.direction.find_unit_vector()
             self.location.add(self.direction)
 
-            # If rabbit goes into the water or off the map, turn it around
+            # If rabbit goes off the map, turn it around
             if self.check_location():
                 self.direction.x *= -2
                 self.direction.y *= -2
